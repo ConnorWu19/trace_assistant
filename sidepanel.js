@@ -34,6 +34,16 @@
   const clearLibraryBtn = document.getElementById('clearLibraryBtn');
   const sideToast = document.getElementById('sideToast');
 
+  // 破壞性操作防呆確認彈窗元件
+  const confirmModal = document.getElementById('confirmModal');
+  const confirmIconBox = document.getElementById('confirmIconBox');
+  const confirmTitle = document.getElementById('confirmTitle');
+  const confirmSubtitle = document.getElementById('confirmSubtitle');
+  const confirmBody = document.getElementById('confirmBody');
+  const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+  const confirmOkBtn = document.getElementById('confirmOkBtn');
+  let confirmCallback = null;
+
   // 7~9 小時即時時數儀表板與湊數元件
   const allocatorStatusTag = document.getElementById('allocatorStatusTag');
   const allocatorHoursText = document.getElementById('allocatorHoursText');
@@ -594,13 +604,87 @@
     pendingFileCases = [];
   }
 
+  // --- 破壞性操作防呆確認彈窗邏輯 ---
+  function showConfirmModal({ title, subtitle, currentCount, incomingCount, confirmText, isDanger, onConfirm }) {
+    if (!confirmModal) return;
+    confirmCallback = onConfirm;
+
+    confirmTitle.textContent = title;
+    confirmSubtitle.textContent = subtitle;
+    confirmOkBtn.textContent = confirmText || '確認';
+
+    if (isDanger) {
+      confirmIconBox.classList.add('danger');
+      confirmOkBtn.className = 'btn btn-confirm-danger';
+    } else {
+      confirmIconBox.classList.remove('danger');
+      confirmOkBtn.className = 'btn btn-confirm-warning';
+    }
+
+    if (currentCount !== undefined && incomingCount !== undefined) {
+      if (incomingCount > 0) {
+        confirmBody.innerHTML = `
+          <div class="confirm-stat-card">
+            <div class="stat-row danger">
+              <span class="stat-label">現有快取字典</span>
+              <span class="stat-value num">${currentCount} 筆 (將被取代)</span>
+            </div>
+            <div class="stat-row success">
+              <span class="stat-label">即將寫入測項</span>
+              <span class="stat-value num">${incomingCount} 筆 (來自檔案)</span>
+            </div>
+          </div>
+          <p class="confirm-note">覆蓋後原測項將無法找回，如需備份請先於下方匯出 JSON 檔。</p>
+        `;
+      } else {
+        confirmBody.innerHTML = `
+          <div class="confirm-stat-card">
+            <div class="stat-row danger">
+              <span class="stat-label">現有快取字典</span>
+              <span class="stat-value num">${currentCount} 筆 (全數清空)</span>
+            </div>
+          </div>
+          <p class="confirm-note">清空後如需恢復，須重新匯入 Excel 或 JSON 備份檔。</p>
+        `;
+      }
+    } else {
+      confirmBody.innerHTML = '';
+    }
+
+    confirmModal.classList.remove('hidden');
+    confirmCancelBtn.focus();
+  }
+
+  function hideConfirmModal() {
+    if (confirmModal) confirmModal.classList.add('hidden');
+    confirmCallback = null;
+  }
+
   function saveFileCases(mode = 'merge') {
     if (!pendingFileCases || pendingFileCases.length === 0) return;
+
+    if (mode === 'overwrite' && currentCases.length > 0) {
+      showConfirmModal({
+        title: '確定要覆蓋現有字典？',
+        subtitle: '此動作將清空原有測項並以檔案取代',
+        currentCount: currentCases.length,
+        incomingCount: pendingFileCases.length,
+        confirmText: '確認覆蓋',
+        isDanger: false,
+        onConfirm: () => executeSaveFileCases('overwrite')
+      });
+      return;
+    }
+
+    executeSaveFileCases(mode);
+  }
+
+  function executeSaveFileCases(mode) {
     const count = pendingFileCases.length;
     const merged = window.CaseLibrary ? window.CaseLibrary.mergeCases(currentCases, pendingFileCases, mode) : pendingFileCases;
 
     saveCases(merged, () => {
-      showToast(`成功匯入 ${count} 筆測項！`);
+      showToast(mode === 'overwrite' ? `已覆蓋字典！載入 ${count} 筆測項` : `成功匯入 ${count} 筆測項！`);
       resetFileZone();
       setTimeout(() => switchTab('search'), 600);
     });
@@ -624,11 +708,19 @@
 
   function clearLibrary() {
     if (currentCases.length === 0) return;
-    if (confirm(`確定要清空目前快取的全部 ${currentCases.length} 筆測項嗎？`)) {
-      saveCases([], () => {
-        showToast('已清空測項字典');
-      });
-    }
+    showConfirmModal({
+      title: '確定要清空測項字典？',
+      subtitle: '此動作將永久移除所有本機快取測項',
+      currentCount: currentCases.length,
+      incomingCount: 0,
+      confirmText: '確認清空',
+      isDanger: true,
+      onConfirm: () => {
+        saveCases([], () => {
+          showToast('已清空測項字典');
+        });
+      }
+    });
   }
 
   // --- 7~8.5 小時智慧湊數與清單操作 ---
@@ -795,9 +887,28 @@
     if (copyPureIdsBtn) copyPureIdsBtn.addEventListener('click', copyTodayPureIds);
     if (clearTodayListBtn) clearTodayListBtn.addEventListener('click', clearTodayList);
 
-    // 鍵盤快捷鍵：Esc 快速關閉湊數建議彈窗
+    // 破壞性操作防呆確認彈窗事件
+    if (confirmCancelBtn) confirmCancelBtn.addEventListener('click', hideConfirmModal);
+    if (confirmOkBtn) {
+      confirmOkBtn.addEventListener('click', () => {
+        const cb = confirmCallback;
+        hideConfirmModal();
+        if (typeof cb === 'function') cb();
+      });
+    }
+    if (confirmModal) {
+      confirmModal.addEventListener('click', (e) => {
+        if (e.target === confirmModal) hideConfirmModal();
+      });
+    }
+
+    // 鍵盤快捷鍵：Esc 快速關閉彈窗
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        if (confirmModal && !confirmModal.classList.contains('hidden')) {
+          hideConfirmModal();
+          return;
+        }
         if (allocationSuggestionBox && !allocationSuggestionBox.classList.contains('hidden')) {
           closeSuggestionBox();
         }
