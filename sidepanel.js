@@ -498,6 +498,7 @@
     xlsxFileInput.value = '';
     dropPrimaryText.textContent = '點擊選取或拖曳檔案至此';
     dropSubText.textContent = '支援 .xlsx, .xls, .csv, .json 檔案格式';
+    fileDropZone.classList.remove('has-file');
     fileActionRow.classList.add('hidden');
     fileStatusMsg.classList.add('hidden');
   }
@@ -508,6 +509,7 @@
     const ext = name.split('.').pop().toLowerCase();
 
     if (!['xlsx', 'xls', 'csv', 'json'].includes(ext)) {
+      fileDropZone.classList.remove('has-file');
       fileStatusMsg.classList.remove('hidden');
       fileStatusMsg.textContent = '不支援的檔案格式，請上傳 .xlsx、.xls、.csv 或 .json 檔案。';
       return;
@@ -569,12 +571,14 @@
       dropSubText.textContent = '解析失敗：未找到有效資料';
       fileStatusMsg.classList.remove('hidden');
       fileStatusMsg.textContent = '無法從檔案中辨識測項。請確認檔案格式與內容是否包含測項資料。';
+      fileDropZone.classList.remove('has-file');
       fileActionRow.classList.add('hidden');
       pendingFileCases = [];
       return;
     }
 
     pendingFileCases = result.cases;
+    fileDropZone.classList.add('has-file');
     dropSubText.textContent = `成功辨識 ${pendingFileCases.length} 筆測項，請點選下方儲存方式：`;
     fileActionRow.classList.remove('hidden');
     fileStatusMsg.classList.add('hidden');
@@ -585,6 +589,7 @@
     dropSubText.textContent = '解析過程發生錯誤';
     fileStatusMsg.classList.remove('hidden');
     fileStatusMsg.textContent = `解析失敗：${err.message || '未知錯誤'}`;
+    fileDropZone.classList.remove('has-file');
     fileActionRow.classList.add('hidden');
     pendingFileCases = [];
   }

@@ -217,20 +217,28 @@
           </div>
         </div>
 
-        <div id="fileActionRow" class="import-btn-row hidden">
-          <button type="button" id="saveFileMergeBtn" class="btn btn-primary">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 5v14M5 12h14"/>
+        <div id="fileActionRow" class="file-action-group hidden">
+          <div class="file-action-grid">
+            <button type="button" id="saveFileMergeBtn" class="btn btn-action-merge" title="將檔案測項加入目前字典（保留原有測項）">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              <span>合併加入字典</span>
+            </button>
+            <button type="button" id="saveFileOverwriteBtn" class="btn btn-action-overwrite" title="清空目前字典並全數以檔案測項取代">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+              </svg>
+              <span>覆蓋字典</span>
+            </button>
+          </div>
+          <button type="button" id="cancelFileBtn" class="btn-cancel-file" title="放棄此檔案並重新選取" aria-label="取消檔案選取">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
-            <span>加入現有字典</span>
+            <span>取消選取檔案</span>
           </button>
-          <button type="button" id="saveFileOverwriteBtn" class="btn btn-secondary">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-            </svg>
-            <span>覆蓋字典</span>
-          </button>
-          <button type="button" id="cancelFileBtn" class="btn btn-outline-sm btn-icon-only" title="取消檔案" aria-label="取消">✕</button>
         </div>
         <div id="fileStatusMsg" class="status-msg hidden"></div>
       </div>
