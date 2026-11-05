@@ -199,12 +199,12 @@
             </svg>
           </span>
           <div class="box-title-group">
-            <h2 class="box-title">匯入 Excel (.xlsx / .xls) 檔案</h2>
-            <p class="box-desc">直接上傳測試清單，自動辨識 Case ID、測項名稱與工時</p>
+            <h2 class="box-title">匯入測項檔案 (Excel / JSON)</h2>
+            <p class="box-desc">支援上傳 Excel 測試清單或還原先前匯出的 JSON 備份檔</p>
           </div>
         </div>
 
-        <input type="file" id="xlsxFileInput" accept=".xlsx,.xls,.csv" class="hidden" />
+        <input type="file" id="xlsxFileInput" accept=".xlsx,.xls,.csv,.json" class="hidden" />
         <div id="fileDropZone" class="file-drop-zone">
           <svg class="drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -212,8 +212,8 @@
             <line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
           <div class="drop-text-col">
-            <span class="drop-primary-text" id="dropPrimaryText">點擊選取或拖曳 .xlsx 檔案至此</span>
-            <span class="drop-sub-text" id="dropSubText">支援 .xlsx, .xls, .csv 檔案格式</span>
+            <span class="drop-primary-text" id="dropPrimaryText">點擊選取或拖曳檔案至此</span>
+            <span class="drop-sub-text" id="dropSubText">支援 .xlsx, .xls, .csv, .json 檔案格式</span>
           </div>
         </div>
 

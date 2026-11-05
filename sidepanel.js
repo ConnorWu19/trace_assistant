@@ -492,12 +492,12 @@
     });
   }
 
-  // --- Excel / CSV 檔案上傳解析 ---
+  // --- Excel / CSV / JSON 檔案上傳解析 ---
   function resetFileZone() {
     pendingFileCases = [];
     xlsxFileInput.value = '';
-    dropPrimaryText.textContent = '點擊選取或拖曳 .xlsx 檔案至此';
-    dropSubText.textContent = '支援 .xlsx, .xls, .csv 檔案格式';
+    dropPrimaryText.textContent = '點擊選取或拖曳檔案至此';
+    dropSubText.textContent = '支援 .xlsx, .xls, .csv, .json 檔案格式';
     fileActionRow.classList.add('hidden');
     fileStatusMsg.classList.add('hidden');
   }
@@ -507,9 +507,9 @@
     const name = file.name || '';
     const ext = name.split('.').pop().toLowerCase();
 
-    if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+    if (!['xlsx', 'xls', 'csv', 'json'].includes(ext)) {
       fileStatusMsg.classList.remove('hidden');
-      fileStatusMsg.textContent = '不支援的檔案格式，請上傳 .xlsx、.xls 或 .csv 檔案。';
+      fileStatusMsg.textContent = '不支援的檔案格式，請上傳 .xlsx、.xls、.csv 或 .json 檔案。';
       return;
     }
 
@@ -519,7 +519,29 @@
 
     const reader = new FileReader();
 
-    if (ext === 'csv') {
+    if (ext === 'json') {
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const raw = Array.isArray(parsed) ? parsed : (parsed.cases || []);
+          const cases = raw.filter(c => c && (c.title || c.id)).map((c, i) => {
+            const hours = typeof c.hours === 'number' ? c.hours : (parseFloat(c.hours) || 1.0);
+            const minutes = typeof c.minutes === 'number' ? c.minutes : Math.round(hours * 60);
+            return {
+              id: String(c.id || `TC-${String(i + 1).padStart(3, '0')}`).trim(),
+              title: String(c.title || c.id).trim(),
+              hours,
+              minutes,
+              timeDisplay: c.timeDisplay || `${minutes}m (${hours.toFixed(1)}h)`
+            };
+          });
+          onFileParsed(name, { cases });
+        } catch (err) {
+          onFileParseError(new Error('JSON 格式錯誤，無法正確解析。'));
+        }
+      };
+      reader.readAsText(file);
+    } else if (ext === 'csv') {
       reader.onload = (e) => {
         try {
           const res = window.CaseLibrary ? window.CaseLibrary.parseImportText(e.target.result) : { cases: [] };
@@ -546,7 +568,7 @@
     if (!result || !result.cases || result.cases.length === 0) {
       dropSubText.textContent = '解析失敗：未找到有效資料';
       fileStatusMsg.classList.remove('hidden');
-      fileStatusMsg.textContent = '無法從檔案中辨識測項。請確認包含 Case ID 與測項名稱標題或資料。';
+      fileStatusMsg.textContent = '無法從檔案中辨識測項。請確認檔案格式與內容是否包含測項資料。';
       fileActionRow.classList.add('hidden');
       pendingFileCases = [];
       return;
@@ -573,7 +595,7 @@
     const merged = window.CaseLibrary ? window.CaseLibrary.mergeCases(currentCases, pendingFileCases, mode) : pendingFileCases;
 
     saveCases(merged, () => {
-      showToast(`成功匯入 ${count} 筆 Excel 測項！`);
+      showToast(`成功匯入 ${count} 筆測項！`);
       resetFileZone();
       setTimeout(() => switchTab('search'), 600);
     });
