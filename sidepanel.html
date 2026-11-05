@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" id="colorSchemeMeta" />
+  <meta name="theme-color" content="#090a0f" id="themeColorMeta" />
+  <title>測項智慧速查 - Trace助手</title>
+  <link rel="stylesheet" href="fonts.css" />
+  <link rel="stylesheet" href="sidepanel.css" />
+</head>
+<body>
+  <div class="sidepanel-root">
+    <!-- 頂部標題列 -->
+    <header class="panel-header">
+      <div class="header-brand">
+        <span class="brand-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 6h7M4 12h5M4 18h4"/>
+            <circle cx="15.5" cy="13.5" r="4.5"/>
+            <path d="M19 17l3 3"/>
+          </svg>
+        </span>
+        <div class="brand-titles">
+          <h1 class="brand-title">測項速查庫</h1>
+          <span class="brand-sub num" id="totalCasesBadge" title="目前測項資料庫已快取筆數">
+            <span class="badge-dot" aria-hidden="true"></span>
+            <span class="badge-num" id="totalCasesCount">0</span>
+            <span class="badge-unit">個測項</span>
+          </span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="themeToggleBtn" class="icon-btn" title="切換深淺主題" aria-label="切換主題">
+          <svg id="themeIconSun" class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+          <svg id="themeIconMoon" class="icon hidden" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 分頁導覽 Tab (Segmented Control) -->
+    <nav class="nav-tabs" role="tablist">
+      <div class="nav-tabs-track">
+        <button type="button" id="tabSearchBtn" class="tab-btn active" role="tab" aria-selected="true">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <span>搜尋速查</span>
+        </button>
+        <button type="button" id="tabImportBtn" class="tab-btn" role="tab" aria-selected="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>匯入與管理</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- 視圖 1: 搜尋速查 -->
+    <main id="searchView" class="view-panel active">
+      <div class="search-sticky-box">
+        <div class="search-input-wrap">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input type="text" id="caseSearchInput" class="search-input" placeholder="模糊搜尋測項名稱 (WiFi, Audio, Sleep)..." autofocus />
+          <button type="button" id="clearSearchBtn" class="clear-btn hidden" title="清除搜尋" aria-label="清除搜尋">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="search-meta-bar">
+          <span id="searchResultCount" class="result-count num">顯示 0 個測項</span>
+        </div>
+      </div>
+
+      <!-- 7~8.5 小時即時時數儀表板與智慧湊數器 -->
+      <section class="allocator-card" id="allocatorCard">
+        <div class="allocator-header">
+          <div class="allocator-title-col">
+            <span class="allocator-title">今日累計工時</span>
+            <span class="allocator-status-tag warning" id="allocatorStatusTag">&lt;7h 未達標</span>
+          </div>
+          <div class="allocator-stat-col">
+            <span class="allocator-stat-value num" id="allocatorHoursText">0.0h / 8.0h</span>
+          </div>
+        </div>
+
+        <!-- 進度條 (安全區間 7.0 ~ 8.5h) -->
+        <div class="allocator-bar-wrap">
+          <div class="allocator-bar-track">
+            <div class="allocator-bar-fill warning" id="allocatorBarFill" style="width: 0%;"></div>
+            <div class="allocator-safe-zone" title="7.0 ~ 8.5 小時安全合規區間"></div>
+          </div>
+        </div>
+
+        <!-- 兩層式操作區：第一層為全寬主操作按鈕，第二層為工具列 -->
+        <div class="allocator-actions">
+          <button type="button" id="smartAllocateBtn" class="btn btn-smart-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+            <span>智慧湊數 (7.0 ~ 8.5h)</span>
+          </button>
+          <div class="allocator-btn-subrow">
+            <button type="button" id="copyTodayListBtn" class="btn btn-sub" title="複製今日已選清單與工時（含 TC ID）">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span>複製清單</span>
+            </button>
+            <button type="button" id="copyPureIdsBtn" class="btn btn-sub" title="複製純 TC ID 清單（換行，方便批次貼上）">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+              </svg>
+              <span>純 TC ID</span>
+            </button>
+            <button type="button" id="clearTodayListBtn" class="btn btn-sub btn-clear-today" title="清空今日選取工時">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+              </svg>
+              <span>重置</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 湊數建議推薦卡片 -->
+        <div id="allocationSuggestionBox" class="suggestion-box hidden">
+          <div class="suggestion-header">
+            <span class="suggestion-title">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="6"/>
+                <circle cx="12" cy="12" r="2"/>
+              </svg>
+              <span>配時推薦：合計 <span id="suggTotalHours" class="num">8.0h</span></span>
+            </span>
+            <button type="button" id="closeSuggBtn" class="close-sugg-btn" aria-label="關閉推薦">✕</button>
+          </div>
+          <div id="suggCasesList" class="sugg-cases-list"></div>
+          <div class="sugg-actions-row">
+            <button type="button" id="copySuggIdsBtn" class="btn btn-outline-sm btn-sugg-copy" title="複製此推薦組合的純 TC ID">
+              <span>📋 複製 TC ID</span>
+            </button>
+            <button type="button" id="applySuggBtn" class="btn btn-primary btn-apply">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>一鍵採用此組合</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 今日已選測項操作托盤 (Today Tray) -->
+        <div id="todayTray" class="today-tray hidden">
+          <div class="today-tray-header">
+            <div class="today-tray-title-group">
+              <span class="today-tray-title">📋 今日已選測項</span>
+              <span class="today-tray-badge num" id="todayTrayBadge">0 項</span>
+            </div>
+            <span class="today-tray-hint">點「⚡填入」直接帶入網頁</span>
+          </div>
+          <div id="todayTrayList" class="today-tray-list"></div>
+        </div>
+      </section>
+
+      <!-- 測項列表清單 -->
+      <div id="caseListContainer" class="case-list-container">
+        <!-- JS 動態渲染測項卡片 -->
+      </div>
+    </main>
+
+    <!-- 視圖 2: 匯入與管理 -->
+    <section id="importView" class="view-panel hidden">
+      <!-- 區塊 A: Excel 檔案匯入 (.xlsx / .xls) -->
+      <div class="card-box">
+        <div class="card-box-header">
+          <span class="box-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="8" y1="13" x2="16" y2="13"/>
+              <line x1="8" y1="17" x2="16" y2="17"/>
+              <line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+          </span>
+          <div class="box-title-group">
+            <h2 class="box-title">匯入 Excel (.xlsx / .xls) 檔案</h2>
+            <p class="box-desc">直接上傳測試清單，自動辨識 Case ID、測項名稱與工時</p>
+          </div>
+        </div>
+
+        <input type="file" id="xlsxFileInput" accept=".xlsx,.xls,.csv" class="hidden" />
+        <div id="fileDropZone" class="file-drop-zone">
+          <svg class="drop-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div class="drop-text-col">
+            <span class="drop-primary-text" id="dropPrimaryText">點擊選取或拖曳 .xlsx 檔案至此</span>
+            <span class="drop-sub-text" id="dropSubText">支援 .xlsx, .xls, .csv 檔案格式</span>
+          </div>
+        </div>
+
+        <div id="fileActionRow" class="import-btn-row hidden">
+          <button type="button" id="saveFileMergeBtn" class="btn btn-primary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <span>加入現有字典</span>
+          </button>
+          <button type="button" id="saveFileOverwriteBtn" class="btn btn-secondary">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>覆蓋字典</span>
+          </button>
+          <button type="button" id="cancelFileBtn" class="btn btn-outline-sm btn-icon-only" title="取消檔案" aria-label="取消">✕</button>
+        </div>
+        <div id="fileStatusMsg" class="status-msg hidden"></div>
+      </div>
+
+      <!-- 區塊 B: 字典管理與備份 -->
+      <div class="card-box">
+        <div class="card-box-header">
+          <span class="box-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+          </span>
+          <div class="box-title-group">
+            <h2 class="box-title">快取管理與備份</h2>
+            <p class="box-desc" id="storageSummaryText">目前已快取 0 筆測項</p>
+          </div>
+        </div>
+        <div class="manage-btn-row">
+          <button type="button" id="exportJsonBtn" class="btn btn-outline">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>匯出 JSON 備份</span>
+          </button>
+          <button type="button" id="clearLibraryBtn" class="btn btn-danger">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <span>清空字典</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 底部浮動訊息提示 Toast -->
+    <div id="sideToast" class="side-toast hidden"></div>
+  </div>
+
+  <script src="xlsx.mini.min.js"></script>
+  <script src="caseLibrary.js"></script>
+  <script src="smartAllocator.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

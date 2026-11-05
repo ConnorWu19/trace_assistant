@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0b0c10" />
+  <title>Trace 工時填寫提醒</title>
+  <link rel="stylesheet" href="fonts.css" />
+  <link rel="stylesheet" href="toast.css" />
+</head>
+<body>
+  <main class="toast-shell" data-ui>
+    <!-- 頂部狀態列 -->
+    <header class="toast-header">
+      <div class="toast-brand">
+        <span class="pulse-ring" id="pulseIndicator" aria-hidden="true">
+          <span class="pulse-dot"></span>
+        </span>
+        <span class="toast-app-name">Trace Assistant</span>
+      </div>
+      <div class="toast-header-right">
+        <div class="toast-segmented-capsule" role="group" aria-label="提醒狀態與請假操作">
+          <span class="capsule-segment status-segment toast-time-chip" id="timeChip">13:00 提醒</span>
+          <span class="capsule-divider" aria-hidden="true"></span>
+          <button type="button" id="btnToastLeave" class="capsule-segment action-segment toast-leave-chip" title="若今日休假，點此設定今日免打擾，全天不再跳出提醒">
+            <svg class="capsule-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+              <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+              <line x1="6" y1="2" x2="6" y2="4"></line>
+              <line x1="10" y1="2" x2="10" y2="4"></line>
+              <line x1="14" y1="2" x2="14" y2="4"></line>
+            </svg>
+            <span>我今天請假</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主訊息區塊 -->
+    <section class="toast-body">
+      <div class="toast-headline-row">
+        <div class="toast-copy">
+          <h1 id="toastTitle">該填寫今日 Trace 囉</h1>
+        </div>
+        <div class="mini-window-tag num" id="windowTag">截止 18:00</div>
+      </div>
+
+      <!-- 迷你四段提醒進度條 -->
+      <div id="miniStrip" class="mini-strip" aria-hidden="true"></div>
+    </section>
+
+    <!-- 三合一操作按鈕區 -->
+    <section class="toast-actions" aria-label="提醒操作選項">
+      <!-- 1. 現在去填 -->
+      <button id="btnGoFill" type="button" class="toast-btn-primary">
+        <div class="btn-primary-left">
+          <span class="primary-icon-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 17L17 7M17 7H8M17 7V16"/>
+            </svg>
+          </span>
+          <div class="primary-labels">
+            <span class="primary-title">現在去填 Trace</span>
+          </div>
+        </div>
+        <span class="primary-badge">開啟網頁</span>
+      </button>
+
+      <!-- 2 & 3. 我今天已經填了 / 等等再填 -->
+      <div id="toastSecondaryRow" class="toast-secondary-row">
+        <button id="btnDone" type="button" class="toast-btn-sec sec-done">
+          <span class="sec-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
+          <div class="sec-copy">
+            <span class="sec-title">我今天已經填了</span>
+            <span class="sec-sub">今日不再提醒</span>
+          </div>
+        </button>
+
+        <button id="btnSnooze" type="button" class="toast-btn-sec sec-snooze">
+          <span class="sec-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <polyline points="12 7 12 12 15.5 14"/>
+            </svg>
+          </span>
+          <div class="sec-copy">
+            <span class="sec-title">等等再填</span>
+            <span class="sec-sub num" id="snoozeSubText">1 小時後再提醒</span>
+          </div>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script src="toast.js"></script>
+</body>
+</html>

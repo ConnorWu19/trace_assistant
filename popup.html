@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0b0c10" />
+  <title>Trace Assistant</title>
+  <link rel="stylesheet" href="fonts.css" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="app-frame" data-ui>
+    <!-- 頂部導覽列：品牌識別 + 頁籤切換 + 深淺主題切換 -->
+    <header class="topbar">
+      <div class="brand-group">
+        <span class="pulse-ring" aria-hidden="true">
+          <span class="pulse-dot"></span>
+        </span>
+        <div class="brand-meta">
+          <span class="brand-name">Trace Assistant</span>
+          <span class="brand-date num" id="todayDate">----/--/--</span>
+        </div>
+      </div>
+
+      <div class="topbar-controls">
+        <nav class="view-switcher" role="tablist" aria-label="畫面切換">
+          <button type="button" id="tabOverview" class="tab-pill active" role="tab" aria-selected="true">首頁</button>
+          <button type="button" id="tabLeave" class="tab-pill" role="tab" aria-selected="false">
+            <span>請假</span>
+            <span id="leaveTabBadge" class="tab-badge num hidden">0</span>
+          </button>
+          <button type="button" id="tabSettings" class="tab-pill" role="tab" aria-selected="false">設定</button>
+        </nav>
+        <button type="button" id="themeToggleBtn" class="icon-btn" title="切換深色 / 淺色主題" aria-label="切換深色與淺色主題">
+          <svg id="themeIconSun" class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+          <svg id="themeIconMoon" class="icon hidden" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 視圖 1：今日首頁 (Overview View) -->
+    <main id="viewOverview" class="view-pane active">
+      <!-- 核心視覺卡：單一視覺焦點 + 倒數狀態 + 乾淨排程軸 -->
+      <section class="hero-card" id="heroCard">
+        <!-- 頂部狀態列：左狀態膠囊、右提醒區間 -->
+        <div class="hero-top-bar">
+          <span id="statusPill" class="status-chip warning">
+            <span class="chip-dot"></span>
+            <span id="statusPillText">今日待填寫</span>
+          </span>
+          <span class="cutoff-tag num" id="cutoffBadge">13:00 – 18:00</span>
+        </div>
+
+        <!-- 主數據區：雙欄指標，俐落對齊 -->
+        <div class="hero-main">
+          <div class="hero-col hero-col-left">
+            <span class="metric-label" id="metricLabel">下次提醒時間</span>
+            <div class="stat-clock-row">
+              <span class="stat-time num" id="primaryTimeValue">13:00</span>
+            </div>
+          </div>
+
+          <div class="hero-col hero-col-right" id="dialCenterContent">
+            <span class="metric-label" id="dialTopLabel">距離下次提醒</span>
+            <div class="metric-val-row">
+              <span class="metric-val num" id="dialMainValue">26</span>
+              <span class="metric-unit" id="dialUnit">分</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="stat-caption" id="statusFinding">
+          到達提醒時間將於螢幕右下角彈出通知
+        </p>
+
+        <!-- 底部：今日提醒時段軌跡 (不顯示網址) -->
+        <div class="schedule-section">
+          <div class="well-header">
+            <span class="well-title">今日提醒時段</span>
+            <span class="well-scope num" id="scopeHost">每 1 小時</span>
+          </div>
+          <div id="timeStrip" class="slot-grid" aria-label="今日提醒時間軸"></div>
+        </div>
+      </section>
+
+      <!-- 三大核心動作按鈕區 -->
+      <section class="cta-stack" aria-label="今日填寫操作">
+        <!-- 1. 現在去填 (反轉實心膠囊主按鈕) -->
+        <button id="openUrlBtn" type="button" class="cta-primary">
+          <div class="cta-primary-left">
+            <span class="cta-icon-circle">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 17L17 7M17 7H8M17 7V16"/>
+              </svg>
+            </span>
+            <div class="cta-text-col">
+              <span class="cta-title">現在去填 Trace</span>
+            </div>
+          </div>
+          <span class="cta-pill-tag">立即開啟</span>
+        </button>
+
+        <!-- 2 & 3. 我今天已經填了 + 等等再填 -->
+        <div id="secondaryRow" class="cta-secondary-grid">
+          <button id="toggleCompleteBtn" type="button" class="cta-card-btn btn-check">
+            <span class="card-btn-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </span>
+            <div class="card-btn-copy">
+              <span class="card-btn-title" id="checkBtnText">我今天已經填了</span>
+              <span class="card-btn-sub" id="checkBtnSub">今日不再提醒</span>
+            </div>
+          </button>
+
+          <button id="snoozeBtn" type="button" class="cta-card-btn btn-snooze">
+            <span class="card-btn-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="9"/>
+                <polyline points="12 7 12 12 15.5 14"/>
+              </svg>
+            </span>
+            <div class="card-btn-copy">
+              <span class="card-btn-title">等等再填</span>
+              <span class="card-btn-sub num" id="snoozeBtnSub">延後 1 小時後提醒</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- 4. 測項智慧速查側邊欄按鈕 -->
+        <button id="openSidePanelBtn" type="button" class="cta-secondary-wide">
+          <div class="cta-primary-left">
+            <span class="cta-icon-circle-subtle">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 6h7M4 12h5M4 18h4"/>
+                <circle cx="15.5" cy="13.5" r="4.5"/>
+                <path d="M19 17l3 3"/>
+              </svg>
+            </span>
+            <div class="cta-text-col">
+              <span class="cta-title">測項智慧速查</span>
+              <span class="cta-sub">模糊搜尋、Case ID 快速複製</span>
+            </div>
+          </div>
+          <span class="cta-pill-tag">側邊欄 ↗</span>
+        </button>
+      </section>
+
+      <!-- 底部快速請假與預覽通知列 -->
+      <footer class="quick-footer">
+        <button id="quickLeaveLinkBtn" type="button" class="link-btn">排定請假免打擾 →</button>
+        <button id="quickTestBtn" type="button" class="link-btn">預覽右下角提醒 →</button>
+      </footer>
+    </main>
+
+    <!-- 視圖 2：請假免打擾排程 (Leave Planner View) -->
+    <section id="viewLeave" class="view-pane hidden" aria-label="請假免打擾設定">
+      <div class="leave-card">
+        <!-- 1. 一鍵快速請假切換 -->
+        <div class="leave-block">
+          <div class="leave-block-header">
+            <span class="leave-block-title">快速請假切換</span>
+            <span class="leave-block-hint">點擊即刻生效 · 該日不彈提醒</span>
+          </div>
+          <div class="quick-leave-grid">
+            <button type="button" id="quickLeaveTodayBtn" class="quick-leave-btn">
+              <div class="ql-top">
+                <span class="ql-label">今天</span>
+                <span class="ql-dot" id="qlTodayDot"></span>
+              </div>
+              <div class="ql-date-row">
+                <span class="ql-date num" id="qlTodayDate">--/--</span>
+                <span class="ql-week" id="qlTodayWeek">週-</span>
+              </div>
+              <span class="ql-status" id="qlTodayStatus">點擊休假</span>
+            </button>
+
+            <button type="button" id="quickLeaveTomorrowBtn" class="quick-leave-btn">
+              <div class="ql-top">
+                <span class="ql-label">明天</span>
+                <span class="ql-dot" id="qlTomorrowDot"></span>
+              </div>
+              <div class="ql-date-row">
+                <span class="ql-date num" id="qlTomorrowDate">--/--</span>
+                <span class="ql-week" id="qlTomorrowWeek">週-</span>
+              </div>
+              <span class="ql-status" id="qlTomorrowStatus">預先排假</span>
+            </button>
+
+            <button type="button" id="quickLeaveNextBtn" class="quick-leave-btn">
+              <div class="ql-top">
+                <span class="ql-label" id="qlNextLabel">後天</span>
+                <span class="ql-dot" id="qlNextDot"></span>
+              </div>
+              <div class="ql-date-row">
+                <span class="ql-date num" id="qlNextDate">--/--</span>
+                <span class="ql-week" id="qlNextWeek">週-</span>
+              </div>
+              <span class="ql-status" id="qlNextStatus">預先排假</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. 自訂請假日期或連假區間 -->
+        <div class="leave-block leave-divider">
+          <div class="leave-block-header">
+            <span class="leave-block-title">新增請假日期 / 連假區間</span>
+            <span class="leave-block-hint">支援單日或多日連假</span>
+          </div>
+          <div class="leave-range-picker">
+            <div class="time-range-row">
+              <div class="field-box">
+                <label for="leaveStartInput">開始日期</label>
+                <input type="date" id="leaveStartInput" class="date-input num" />
+              </div>
+              <div class="range-arrow" aria-hidden="true">→</div>
+              <div class="field-box">
+                <label for="leaveEndInput">結束日期</label>
+                <input type="date" id="leaveEndInput" class="date-input num" />
+              </div>
+            </div>
+            <button type="button" id="addLeaveBtn" class="btn-solid leave-add-btn">
+              + 加入請假免打擾清單
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. 已排定請假清單 -->
+        <div class="leave-block leave-divider">
+          <div class="leave-block-header">
+            <span class="leave-block-title">已排定請假清單</span>
+            <button type="button" id="clearAllLeaveBtn" class="leave-clear-btn hidden">全部清除</button>
+          </div>
+          <div id="leaveList" class="leave-list" role="list" aria-label="已排定請假日期"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 視圖 3：排程與網址設定 (Settings View) -->
+    <section id="viewSettings" class="view-pane hidden" aria-label="排程設定">
+      <div class="settings-card">
+        <div class="settings-block-header">
+          <span class="settings-block-title">提醒時段範圍</span>
+          <button type="button" id="resetTimeBtn" class="settings-action-link" title="重設為預設時間 (13:00 ~ 18:00)">回復預設時間</button>
+        </div>
+        <div class="time-range-row">
+          <div class="field-box">
+            <label for="startTimeInput">首次提醒時間</label>
+            <input type="time" id="startTimeInput" class="time-input num" value="13:00" />
+          </div>
+          <div class="range-arrow" aria-hidden="true">→</div>
+          <div class="field-box">
+            <label for="endTimeInput">最後提醒時間</label>
+            <input type="time" id="endTimeInput" class="time-input num" value="18:00" />
+          </div>
+        </div>
+
+        <div class="field-box">
+          <label>「等等再填」延後頻率</label>
+          <div class="segmented-pills" id="intervalGroup" role="radiogroup" aria-label="延後提醒頻率">
+            <button type="button" class="seg-pill num" data-val="30">30 分鐘</button>
+            <button type="button" class="seg-pill num active" data-val="60">1 小時</button>
+            <button type="button" class="seg-pill num" data-val="90">1.5 小時</button>
+            <button type="button" class="seg-pill num" data-val="120">2 小時</button>
+          </div>
+        </div>
+
+        <div class="field-box">
+          <label for="traceUrlInput">Trace 填寫網址</label>
+          <input type="url" id="traceUrlInput" class="url-input num" value="http://tpecrawler:7779/timesheet/new" placeholder="http://tpecrawler:7779/timesheet/new" />
+        </div>
+
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-title">週末免打擾模式</span>
+            <span class="toggle-sub">週六與週日停用自動彈出提醒</span>
+          </div>
+          <label class="ios-switch" aria-label="週末免打擾模式">
+            <input type="checkbox" id="skipWeekendsInput" checked />
+            <span class="ios-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-actions">
+          <button id="testNotifyBtn" type="button" class="btn-outline">預覽右下角通知</button>
+          <button id="saveSettingsBtn" type="button" class="btn-solid">儲存並套用</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 浮動狀態提示膠囊 -->
+    <div id="toastMsg" class="status-toast hidden" role="status" aria-live="polite"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

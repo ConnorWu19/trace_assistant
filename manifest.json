@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "Trace助手 (Trace Assistant)",
+  "version": "1.0.0",
+  "version_name": "1.0",
+  "description": "Trace 輔助工時提醒與填寫助手",
+  "permissions": [
+    "alarms",
+    "notifications",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "http://tpecrawler:7779/*",
+    "http://tpecrawler/*"
+  ],
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://tpecrawler:7779/*",
+        "http://tpecrawler/*"
+      ],
+      "js": ["caseLibrary.js", "smartAllocator.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Trace助手 (Trace Assistant)",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "24": "icons/icon24.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "24": "icons/icon24.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["default_cases.json"],
+      "matches": [
+        "http://tpecrawler:7779/*",
+        "http://tpecrawler/*"
+      ]
+    }
+  ]
+}
